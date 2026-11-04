@@ -25,7 +25,8 @@ data class FeedUiState(
     val endReached: Boolean = false,
     val sort: SortOrder = SortOrder.RELEVANCE,
     val fromCache: Boolean = false,
-    val scanned: Int = 0
+    val scanned: Int = 0,
+    val fallbackNote: String? = null
 )
 
 class FeedViewModel(
@@ -108,6 +109,7 @@ class FeedViewModel(
                         endReached = page.endReached || page.nextOffset == null,
                         fromCache = page.fromCache,
                         scanned = page.totalScanned,
+                        fallbackNote = page.fallbackNote,
                         error = null
                     )
                 }
