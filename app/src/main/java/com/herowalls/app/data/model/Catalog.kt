@@ -33,7 +33,7 @@ object Catalog {
         HeroCategory("black-widow", "Black Widow", "Black Widow (Natasha Romanova)", CollectionGroup.MARVEL, "Red room graduate"),
         HeroCategory("captain-marvel", "Captain Marvel", "Captain Marvel (Marvel Comics)", CollectionGroup.MARVEL, "Higher, further, faster"),
         HeroCategory("deadpool", "Deadpool", "Deadpool", CollectionGroup.MARVEL, "Maximum effort"),
-        HeroCategory("wolverine", "Wolverine", "Wolverine (character)", CollectionGroup.MARVEL, "The best there is"),
+        HeroCategory("wolverine", "Wolverine", "Wolverine cosplay", CollectionGroup.MARVEL, "The best there is"),
         HeroCategory("fantastic-four", "Fantastic Four", "Fantastic Four", CollectionGroup.MARVEL, "Marvel's first family"),
         HeroCategory("guardians", "Guardians of the Galaxy", "Guardians of the Galaxy", CollectionGroup.MARVEL, "A bunch of a-holes"),
         HeroCategory("avengers", "Avengers", "Avengers (comics)", CollectionGroup.MARVEL, "Assemble")
@@ -66,14 +66,14 @@ object Catalog {
     )
 
     val collections = listOf(
-        HeroCategory("superhero-groups", "Superhero Groups", "superhero team group", CollectionGroup.COLLECTIONS, "Teams that fight together"),
-        HeroCategory("comic-book-art", "Comic Book Art", "comic book art", CollectionGroup.COLLECTIONS, "Panels, inks and covers"),
+        HeroCategory("superhero-groups", "Superhero Groups", "Avengers cosplay group", CollectionGroup.COLLECTIONS, "Teams that fight together"),
+        HeroCategory("comic-book-art", "Comic Book Art", "Marvel comic book cover", CollectionGroup.COLLECTIONS, "Panels, inks and covers"),
         HeroCategory("superhero-logos", "Superhero Logos", "superhero logo", CollectionGroup.COLLECTIONS, "Emblems and insignia"),
-        HeroCategory("classic-heroes", "Classic Heroes", "classic comic superhero", CollectionGroup.COLLECTIONS, "Golden and silver age legends"),
-        HeroCategory("animated-heroes", "Animated Superheroes", "animated superhero cartoon", CollectionGroup.COLLECTIONS, "Saturday morning legends"),
-        HeroCategory("superhero-movies", "Superhero Movies", "superhero movie premiere", CollectionGroup.COLLECTIONS, "Cinema and red carpets"),
-        HeroCategory("villain-wallpapers", "Villain Wallpapers", "villain cosplay", CollectionGroup.COLLECTIONS, "Bad guys, great art"),
-        HeroCategory("cinematic-art", "Cinematic Artwork", "cinematic superhero", CollectionGroup.COLLECTIONS, "Big screen drama")
+        HeroCategory("classic-heroes", "Classic Heroes", "Superman Action Comics", CollectionGroup.COLLECTIONS, "Golden and silver age legends"),
+        HeroCategory("animated-heroes", "Animated Superheroes", "Spider-Man cartoon", CollectionGroup.COLLECTIONS, "Saturday morning legends"),
+        HeroCategory("superhero-movies", "Superhero Movies", "Marvel Studios panel", CollectionGroup.COLLECTIONS, "Cinema and red carpets"),
+        HeroCategory("villain-wallpapers", "Villain Wallpapers", "Batman villains cosplay", CollectionGroup.COLLECTIONS, "Bad guys, great art"),
+        HeroCategory("cinematic-art", "Cinematic Artwork", "Justice League cosplay", CollectionGroup.COLLECTIONS, "Big screen drama")
     )
 
     /** Broad query used for the "Latest wallpapers" live feed. */
