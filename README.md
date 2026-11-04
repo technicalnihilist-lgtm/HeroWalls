@@ -39,6 +39,13 @@ Search results are additionally scored so a place name or an unrelated object (a
 called Batman, a car in a "superhero comic" search) cannot pass as character artwork. When nothing
 qualifies, the app shows an empty shelf rather than unlicensed images.
 
+**Only superhero artwork.** Commons full-text search is loose: *Black Widow* also returns the P-61
+night fighter, *Ultron* returns a Voigtländer camera lens and *Wolverine* returns the animal. Every
+candidate is checked against a character/franchise lexicon before it can appear, and real-world
+objects, animals and place names (station, aircraft, lens, zoo, dinosaur) are penalised out of the
+results. The daily hero card additionally requires a **named** character, so a generic comedy comic
+that merely mentions "superhero" in its description never becomes the wallpaper of the day.
+
 Marvel, DC, Spider-Man, Batman and all related characters and logos are trademarks of their
 respective owners. HeroWalls is an unofficial browser of freely licensed artwork and is not
 affiliated with any publisher or studio. See [docs/CREDITS.md](docs/CREDITS.md).
