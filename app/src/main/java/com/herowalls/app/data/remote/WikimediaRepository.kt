@@ -76,7 +76,7 @@ class WikimediaRepository(
             offset = offset,
             limit = PAGE_SIZE,
             sort = SortOrder.RELEVANCE,
-            minSide = 1200,
+            minSide = DEFAULT_MIN_SIDE,
             ttlMillis = 20 * 60 * 60 * 1000L
         )
         val pick = page.items.firstOrNull { it.isPortrait } ?: page.items.firstOrNull() ?: return null
@@ -307,7 +307,8 @@ class WikimediaRepository(
 
         /** Words that indicate the file really is artwork / a costume / a figure of a character. */
         private val subjectWords = Regex(
-            "cosplay|costume|statue|figure|figurine|toy|wax|artwork|illustration|render|comic|" +
+            "superhero|super-hero|superheroes|cosplay|costume|statue|figure|figurine|toy|wax|" +
+                "artwork|illustration|render|comic|" +
                 "character|mural|graffiti|bust|action figure|cover|emblem|logo|suit|mask",
             RegexOption.IGNORE_CASE
         )
