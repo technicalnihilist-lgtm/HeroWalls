@@ -68,5 +68,7 @@ data class FeedPage(
     val nextOffset: Int?,
     val endReached: Boolean,
     val fromCache: Boolean,
-    val totalScanned: Int
+    val totalScanned: Int,
+    /** Set when the strict query returned nothing and a wider one was used instead. */
+    val fallbackNote: String? = null
 )
