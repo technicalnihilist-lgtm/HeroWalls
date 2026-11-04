@@ -65,30 +65,40 @@ class WikimediaRepository(
         }
     }
 
-    /** A deterministic "wallpaper of the day" that still comes from live search results. */
+    /**
+     * A deterministic "wallpaper of the day": the same hero for everyone on a given day, still
+     * taken from live Commons results. Several result pages are tried so a quiet page never
+     * leaves the hero card empty.
+     */
     suspend fun dailyWallpaper(): Wallpaper? {
         val day = (System.currentTimeMillis() / 86_400_000L).toInt()
         val cacheKey = "daily:$day"
         readCache(cacheKey, 20 * 60 * 60 * 1000L)?.items?.firstOrNull()?.let { return it }
-        val offset = (day % 6) * PAGE_SIZE
-        val page = feed(
-            category = HeroCategory("daily", "Daily Hero", "superhero comic", CollectionGroup.COLLECTIONS),
-            offset = offset,
-            limit = PAGE_SIZE,
-            sort = SortOrder.RELEVANCE,
-            minSide = DEFAULT_MIN_SIDE,
-            ttlMillis = 20 * 60 * 60 * 1000L
-        )
-        // The hero card must show a named character, not a generic comedy or horror comic whose
-        // description merely mentions the word "superhero".
-        val named = page.items.filter { isNamedCharacter(it) }
-        val pick = named.firstOrNull { it.isPortrait }
-            ?: named.firstOrNull()
-            ?: page.items.firstOrNull { it.isPortrait }
-            ?: page.items.firstOrNull()
-            ?: return null
-        writeCache(cacheKey, page.copy(items = listOf(pick)))
-        return pick
+
+        val category = HeroCategory("daily", "Daily Hero", DAILY_FEED_QUERY, CollectionGroup.COLLECTIONS)
+        val baseOffset = (day % 6) * PAGE_SIZE
+        val offsets = listOf(baseOffset, 0, PAGE_SIZE, PAGE_SIZE * 2, PAGE_SIZE * 3).distinct()
+
+        for (offset in offsets) {
+            val page = runCatching {
+                feed(
+                    category = category,
+                    offset = offset,
+                    limit = PAGE_SIZE,
+                    sort = SortOrder.RELEVANCE,
+                    minSide = DAILY_MIN_SIDE,
+                    ttlMillis = 20 * 60 * 60 * 1000L
+                )
+            }.getOrNull() ?: continue
+
+            val named = page.items.filter { isNamedCharacter(it) }
+            val pick = named.firstOrNull { it.isPortrait } ?: named.firstOrNull()
+            if (pick != null) {
+                writeCache(cacheKey, page.copy(items = listOf(pick)))
+                return pick
+            }
+        }
+        return null
     }
 
     /** Rebuild a wallpaper straight from its Commons page id (used for deep links). */
@@ -325,6 +335,10 @@ class WikimediaRepository(
         const val PAGE_SIZE = 24
         const val THUMB_WIDTH = 1280
         const val DEFAULT_MIN_SIDE = 800
+        private const val DAILY_MIN_SIDE = 600
+
+        /** Broad query the daily pick is drawn from. */
+        private const val DAILY_FEED_QUERY = "superhero"
         const val CACHE_TTL = 15 * 60 * 1000L
         private const val MAX_ATTEMPTS = 4
         private const val MIN_RELEVANCE_SCORE = 3
