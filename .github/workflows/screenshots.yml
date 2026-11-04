@@ -50,32 +50,24 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            set -x
-            PKG=com.herowalls.app.debug
-            ACT=$PKG/com.herowalls.app.MainActivity
             adb wait-for-device
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             mkdir -p docs/screenshots
 
-            # Home (top) - wait for the live Commons sections to arrive
-            adb shell am force-stop $PKG
-            adb shell am start -n $ACT
+            adb shell am start -n com.herowalls.app.debug/com.herowalls.app.MainActivity
             sleep 55
             adb exec-out screencap -p > docs/screenshots/01-home.png
 
-            # Wallpaper detail - tap the daily hero card
             adb shell input tap 540 1150
             sleep 16
             adb exec-out screencap -p > docs/screenshots/02-detail.png
             adb shell input keyevent KEYCODE_BACK
             sleep 4
 
-            # Collections rail further down the home feed
             adb shell input swipe 540 1900 540 800 500
             sleep 10
             adb exec-out screencap -p > docs/screenshots/03-collections.png
 
-            # Search screen - open the search tab, type a character
             adb shell input tap 410 2280
             sleep 6
             adb shell input tap 540 200
@@ -85,10 +77,10 @@ jobs:
             sleep 22
             adb exec-out screencap -p > docs/screenshots/04-search.png
 
-            # Saved and Offline tabs
             adb shell input tap 660 2280
             sleep 6
             adb exec-out screencap -p > docs/screenshots/05-saved.png
+
             adb shell input tap 900 2280
             sleep 6
             adb exec-out screencap -p > docs/screenshots/06-offline.png
@@ -99,7 +91,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git rm -q --cached docs/screenshots/*.png 2>/dev/null || true
           git add docs/screenshots
           git diff --quiet --cached || git commit -m "docs: update app screenshots from emulator run"
           git push || echo "nothing to push"
