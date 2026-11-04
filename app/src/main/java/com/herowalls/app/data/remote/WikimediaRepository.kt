@@ -41,6 +41,10 @@ class WikimediaRepository(
     /** Wall-clock time of the last outbound call, used to keep a polite gap between requests. */
     private var lastCallAt = 0L
 
+    /**
+     * Always asks Commons first - HeroWalls is an online app, and the cache exists only so a
+     * dropped connection shows something instead of an error.
+     */
     suspend fun feed(
         category: HeroCategory,
         offset: Int,
@@ -51,18 +55,61 @@ class WikimediaRepository(
         ttlMillis: Long = CACHE_TTL
     ): FeedPage {
         val cacheKey = buildKey(category.searchTerm, offset, limit, sort, minSide)
-        if (!forceRefresh) {
-            readCache(cacheKey, ttlMillis)?.let { return it.copy(fromCache = true) }
-        }
-        return try {
-            val page = fetchFromNetwork(category, offset, limit, sort, minSide)
+        val network = runCatching { fetchWithFallbacks(category, offset, limit, sort, minSide) }
+        network.getOrNull()?.let { page ->
             writeCache(cacheKey, page)
-            page
-        } catch (e: Exception) {
-            // Network failed: serve stale cache if we have any, otherwise report the error.
-            readCache(cacheKey, Long.MAX_VALUE)?.copy(fromCache = true)?.let { return it }
-            throw e
+            return page
         }
+        readCache(cacheKey, Long.MAX_VALUE)?.let { return it.copy(fromCache = true) }
+        throw network.exceptionOrNull() ?: WikiException("Could not reach Wikimedia Commons")
+    }
+
+    /** A single query attempt: what to search, what to call the result, and the match token. */
+    private data class Attempt(val query: String, val label: String, val token: String)
+
+    /**
+     * Strict query first, then a wider one from the same universe, then the broadest superhero
+     * search. This is why a category never shows an empty shelf while Commons has artwork.
+     */
+    private fun fallbackChain(category: HeroCategory): List<Attempt> {
+        val primaryToken =
+            if (category.id.endsWith("-all") || category.group == CollectionGroup.COLLECTIONS) ""
+            else Text.relevanceToken(category.searchTerm)
+
+        val attempts = mutableListOf(Attempt(category.searchTerm, category.name, primaryToken))
+
+        val (groupQuery, groupLabel) = when (category.group) {
+            CollectionGroup.MARVEL -> "Avengers cosplay group" to "Marvel Universe"
+            CollectionGroup.DC -> "Justice League cosplay" to "DC Universe"
+            CollectionGroup.VILLAINS -> "Batman villains cosplay" to "Villains"
+            CollectionGroup.COLLECTIONS -> "Avengers cosplay" to "Superheroes"
+        }
+        if (category.searchTerm != groupQuery) attempts += Attempt(groupQuery, groupLabel, "")
+        if (attempts.none { it.query == BROAD_QUERY }) attempts += Attempt(BROAD_QUERY, "Superheroes", "")
+
+        return attempts
+    }
+
+    private suspend fun fetchWithFallbacks(
+        category: HeroCategory,
+        offset: Int,
+        limit: Int,
+        sort: SortOrder,
+        minSide: Int
+    ): FeedPage {
+        val attempts = fallbackChain(category)
+        var lastPage: FeedPage? = null
+
+        attempts.forEachIndexed { index, attempt ->
+            val page = fetchFromNetwork(attempt, offset, limit, sort, minSide)
+            if (page.items.isNotEmpty()) {
+                return page.copy(
+                    fallbackNote = if (index == 0) null else "Showing wider results from ${attempt.label}"
+                )
+            }
+            lastPage = page
+        }
+        return lastPage ?: FeedPage(emptyList(), null, true, false, 0)
     }
 
     /**
@@ -113,13 +160,13 @@ class WikimediaRepository(
     }
 
     private suspend fun fetchFromNetwork(
-        category: HeroCategory,
+        attempt: Attempt,
         offset: Int,
         limit: Int,
         sort: SortOrder,
         minSide: Int
     ): FeedPage = gate.withLock {
-        val search = retrying { paced { api.searchFiles(searchQuery(category), limit, offset, sort.apiValue) } }
+        val search = retrying { paced { api.searchFiles("${attempt.query} filetype:bitmap", limit, offset, sort.apiValue) } }
         search.error?.let { throw WikiException("Commons error: ${it.info ?: it.code}") }
 
         val hits = search.query?.search.orEmpty()
@@ -135,8 +182,14 @@ class WikimediaRepository(
             val info = retrying { paced { api.imageInfo(chunk.joinToString("|"), THUMB_WIDTH) } }
             info.error?.let { throw WikiException("Commons error: ${it.info ?: it.code}") }
             val pages = info.query?.pages.orEmpty()
+            val labelled = HeroCategory(
+                id = "feed",
+                name = attempt.label,
+                searchTerm = attempt.query,
+                group = CollectionGroup.COLLECTIONS
+            )
             pages.forEach { dto ->
-                dto.toWallpaper(category, minSide)?.let { wallpapers.add(it) }
+                dto.toWallpaper(labelled, minSide)?.let { wallpapers.add(it) }
             }
         }
 
@@ -144,11 +197,7 @@ class WikimediaRepository(
         // station in Batman, Turkey, and "superhero comic" can surface a car. Every candidate
         // is therefore scored on how likely it is to actually depict the subject, and low
         // scores are dropped before anything reaches the UI.
-        val token = if (category.id.endsWith("-all") || category.group == CollectionGroup.COLLECTIONS) {
-            ""
-        } else {
-            Text.relevanceToken(category.searchTerm)
-        }
+        val token = attempt.token
 
         val filtered = wallpapers
             .asSequence()
@@ -171,11 +220,6 @@ class WikimediaRepository(
             fromCache = false,
             totalScanned = wallpapers.size
         )
-    }
-
-    private fun searchQuery(category: HeroCategory): String = buildString {
-        append(category.searchTerm)
-        append(" filetype:bitmap")
     }
 
     /** Keeps at least [MIN_GAP_MS] between outbound requests so Commons never sees a burst. */
@@ -336,6 +380,9 @@ class WikimediaRepository(
         const val THUMB_WIDTH = 1280
         const val DEFAULT_MIN_SIDE = 800
         private const val DAILY_MIN_SIDE = 600
+
+        /** Last-resort query so no screen is ever empty. */
+        private const val BROAD_QUERY = "superhero cosplay"
 
         /** Broad query the daily pick is drawn from. */
         private const val DAILY_FEED_QUERY = "superhero"
