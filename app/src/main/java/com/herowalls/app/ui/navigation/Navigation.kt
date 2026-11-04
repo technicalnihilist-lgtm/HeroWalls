@@ -208,6 +208,16 @@ private fun HeroBottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    listOf(androidx.compose.ui.graphics.Color.Transparent, androidx.compose.ui.graphics.Color.Black)
+                )
+            )
+            .padding(top = 28.dp)
+    ) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(22.dp))
@@ -242,5 +252,6 @@ private fun HeroBottomBar(
                 }
             }
         }
+    }
     }
 }
