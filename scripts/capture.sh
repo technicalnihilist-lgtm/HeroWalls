@@ -70,11 +70,9 @@ tap_text "Search heroes" || adb shell input tap 540 300
 sleep 8
 shot 04-search.png
 
-# 5. Search results for a character
-adb shell input text "Spider-Man"
-sleep 2
-adb shell input keyevent KEYCODE_ENTER
-sleep 22
-shot 05-search-results.png
+# 5. Character grid: open Spider-Man from the search screen chips
+tap_text "Spider-Man" || adb shell input tap 120 300
+sleep 24
+shot 05-spiderman.png
 
 ls -la "$OUT"
