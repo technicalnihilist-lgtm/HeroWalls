@@ -122,9 +122,11 @@ fun BrowseScreen(
                 endReached = state.endReached,
                 onLoadMore = { viewModel.loadMore() },
                 header = {
-                    if (state.fromCache) {
+                    val note = state.fallbackNote
+                        ?: if (state.fromCache) "Showing cached results - refresh when you are back online" else null
+                    if (note != null) {
                         Text(
-                            text = "Showing cached results - pull refresh when you are back online",
+                            text = note,
                             style = MaterialTheme.typography.bodySmall,
                             color = TextTertiary,
                             modifier = Modifier.padding(bottom = 10.dp)
@@ -134,8 +136,8 @@ fun BrowseScreen(
                 empty = {
                     EmptyState(
                         title = "No reusable artwork yet",
-                        message = "Wikimedia Commons returned no freely licensed images for ${category.name} right now. " +
-                            "HeroWalls never fills this space with unlicensed artwork - try again shortly.",
+                        message = "Wikimedia Commons did not answer for ${category.name} right now. " +
+                            "HeroWalls never fills this space with unlicensed artwork - check your connection and retry.",
                         actionLabel = "Retry",
                         onAction = { viewModel.retry() }
                     )
