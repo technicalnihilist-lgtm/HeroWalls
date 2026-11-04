@@ -11,6 +11,8 @@ Android 7.0+ · no account, no ads, no bundled artwork
 
 ![Wallpaper detail with full image credits](docs/screenshots/02-detail.png)
 
+![Collections, trending and the Marvel rail](docs/screenshots/03-collections.png)
+
 ---
 
 ## What it does
