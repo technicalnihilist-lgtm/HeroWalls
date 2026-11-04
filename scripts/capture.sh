@@ -40,30 +40,37 @@ shot() { adb exec-out screencap -p > "$OUT/$1"; echo "captured $1"; }
 
 adb wait-for-device
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n $ACT
+
+launch() {
+  adb shell am force-stop com.herowalls.app.debug
+  adb shell am start -n com.herowalls.app.debug/com.herowalls.app.MainActivity
+}
+
+# 1. Home
+launch
 sleep 60
 shot 01-home.png
 
-# Wallpaper detail: tap the daily hero card
+# 2. Wallpaper detail
 tap_text "wallpaper" || adb shell input tap 270 900
 sleep 16
 shot 02-detail.png
-adb shell input keyevent KEYCODE_BACK
-sleep 5
 
-# Home scrolled to the collection rails
-adb shell input swipe 540 1400 540 600 400
+# 3. Home scrolled to the collection rails (relaunch so the app is always foreground)
+launch
+sleep 12
+adb shell input swipe 540 1200 540 400 400
 sleep 10
 shot 03-collections.png
 
-# Search tab
-tap_text "Search" || adb shell input tap 410 2250
+# 4. Search screen
+launch
+sleep 12
+tap_text "Search heroes" || adb shell input tap 540 300
 sleep 8
 shot 04-search.png
 
-# Type a character and capture the results grid
-tap_text "Search heroes" || adb shell input tap 540 300
-sleep 3
+# 5. Search results for a character
 adb shell input text "Spider-Man"
 sleep 2
 adb shell input keyevent KEYCODE_ENTER
