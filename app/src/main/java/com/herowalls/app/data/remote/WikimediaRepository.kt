@@ -137,6 +137,7 @@ class WikimediaRepository(
             .asSequence()
             .filter { it.mime in ALLOWED_MIME }
             .filter { it.width >= minSide && it.height >= minSide }
+            .filter { isSuperheroSubject(it) }
             .map { it to relevanceScore(it, token) }
             .filter { it.second >= MIN_RELEVANCE_SCORE }
             .sortedByDescending { it.second }
@@ -272,7 +273,19 @@ class WikimediaRepository(
         }
         if (subjectWords.containsMatchIn(title) || subjectWords.containsMatchIn(description)) score += 3
         if (noiseWords.containsMatchIn(title) || noiseWords.containsMatchIn(description)) score -= 3
+        // Aircraft, lenses, motorcycles and real animals share names with characters.
+        if (objectWords.containsMatchIn(title) || objectWords.containsMatchIn(description)) score -= 6
         return score
+    }
+
+    /**
+     * Hard gate: the file must actually be about a superhero. Commons full-text search happily
+     * returns the P-61 "Black Widow" night fighter, a Voigtländer Ultron lens or a real wolverine,
+     * so a known character or franchise term has to appear in the title or description.
+     */
+    private fun isSuperheroSubject(wallpaper: Wallpaper): Boolean {
+        val blob = wallpaper.displayName + " " + wallpaper.description
+        return superheroTerms.containsMatchIn(blob)
     }
 
     private suspend fun readCache(key: String, ttl: Long): FeedPage? {
@@ -310,6 +323,25 @@ class WikimediaRepository(
             "superhero|super-hero|superheroes|cosplay|costume|statue|figure|figurine|toy|wax|" +
                 "artwork|illustration|render|comic|" +
                 "character|mural|graffiti|bust|action figure|cover|emblem|logo|suit|mask",
+            RegexOption.IGNORE_CASE
+        )
+
+        /** Real-world objects and animals that share a character's name. */
+        private val objectWords = Regex(
+            "aircraft|squadron|fighter|bomber|airplane|lens|voigtl|motorcycle|motorbike|sportster|" +
+                "dinosaur|simonattoi|species|ship\\b|navy|uss |hms |missile|rifle|tank\\b|zoo\\b|" +
+                "gulo|wildlife|animal|panthera|felis|taxidermy|wrestler|wrestling",
+            RegexOption.IGNORE_CASE
+        )
+
+        /** Names, franchises and terms that make a file a genuine superhero image. */
+        private val superheroTerms = Regex(
+            "superhero|super-hero|super hero|superheroine|supervillain|super villain|marvel|avengers|" +
+                "x-men|spider-?man|iron man|captain america|thor|hulk|black panther|doctor strange|" +
+                "black widow|captain marvel|deadpool|wolverine|fantastic four|guardians of the galaxy|" +
+                "thanos|loki|venom|green goblin|red skull|ultron|dc comics|batman|superman|wonder woman|" +
+                "the flash|aquaman|green lantern|cyborg|supergirl|nightwing|justice league|joker|" +
+                "harley quinn|darkseid|lex luthor",
             RegexOption.IGNORE_CASE
         )
 
