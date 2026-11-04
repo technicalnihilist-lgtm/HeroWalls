@@ -52,6 +52,14 @@ objects, animals and place names (station, aircraft, lens, zoo, dinosaur) are pe
 results. The daily hero card additionally requires a **named** character, so a generic comedy comic
 that merely mentions "superhero" in its description never becomes the wallpaper of the day.
 
+### Online first, never an empty shelf
+
+Every screen asks Commons first; the cache is only a safety net for a dropped connection. If a
+strict category query comes back empty, the app widens the search on its own - same universe first
+(Marvel, DC, villains), then a broad superhero search - and says so with a small note. Artwork keeps
+its own creator, licence and source page, so credits stay accurate even when the wider results are
+shown.
+
 Marvel, DC, Spider-Man, Batman and all related characters and logos are trademarks of their
 respective owners. HeroWalls is an unofficial browser of freely licensed artwork and is not
 affiliated with any publisher or studio. See [docs/CREDITS.md](docs/CREDITS.md).
