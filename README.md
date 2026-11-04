@@ -13,6 +13,10 @@ Android 7.0+ · no account, no ads, no bundled artwork
 
 ![Collections, trending and the Marvel rail](docs/screenshots/03-collections.png)
 
+![Search screen](docs/screenshots/04-search.png)
+
+![Spider-Man category grid with licence chips](docs/screenshots/05-spiderman.png)
+
 ---
 
 ## What it does
