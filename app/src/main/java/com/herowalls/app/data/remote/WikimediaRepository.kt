@@ -79,7 +79,14 @@ class WikimediaRepository(
             minSide = DEFAULT_MIN_SIDE,
             ttlMillis = 20 * 60 * 60 * 1000L
         )
-        val pick = page.items.firstOrNull { it.isPortrait } ?: page.items.firstOrNull() ?: return null
+        // The hero card must show a named character, not a generic comedy or horror comic whose
+        // description merely mentions the word "superhero".
+        val named = page.items.filter { isNamedCharacter(it) }
+        val pick = named.firstOrNull { it.isPortrait }
+            ?: named.firstOrNull()
+            ?: page.items.firstOrNull { it.isPortrait }
+            ?: page.items.firstOrNull()
+            ?: return null
         writeCache(cacheKey, page.copy(items = listOf(pick)))
         return pick
     }
@@ -288,6 +295,10 @@ class WikimediaRepository(
         return superheroTerms.containsMatchIn(blob)
     }
 
+    /** True when the file names an actual character or franchise (Batman, Thor, Avengers...). */
+    private fun isNamedCharacter(wallpaper: Wallpaper): Boolean =
+        namedCharacterTerms.containsMatchIn(wallpaper.displayName + " " + wallpaper.description)
+
     private suspend fun readCache(key: String, ttl: Long): FeedPage? {
         val row = cacheDao.get(key) ?: return null
         val age = System.currentTimeMillis() - row.createdAt
@@ -342,6 +353,16 @@ class WikimediaRepository(
                 "thanos|loki|venom|green goblin|red skull|ultron|dc comics|batman|superman|wonder woman|" +
                 "the flash|aquaman|green lantern|cyborg|supergirl|nightwing|justice league|joker|" +
                 "harley quinn|darkseid|lex luthor",
+            RegexOption.IGNORE_CASE
+        )
+
+        /** Specific characters and franchises - no generic words like "superhero". */
+        private val namedCharacterTerms = Regex(
+            "marvel|avengers|x-men|spider-?man|iron man|captain america|thor|hulk|black panther|" +
+                "doctor strange|black widow|captain marvel|deadpool|wolverine|fantastic four|" +
+                "guardians of the galaxy|thanos|loki|venom|green goblin|red skull|ultron|dc comics|" +
+                "batman|superman|wonder woman|the flash|aquaman|green lantern|cyborg|supergirl|" +
+                "nightwing|justice league|joker|harley quinn|darkseid|lex luthor|supervillain|super villain",
             RegexOption.IGNORE_CASE
         )
 
