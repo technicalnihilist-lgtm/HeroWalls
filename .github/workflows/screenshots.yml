@@ -55,32 +55,26 @@ jobs:
             mkdir -p docs/screenshots
 
             adb shell am start -n com.herowalls.app.debug/com.herowalls.app.MainActivity
-            sleep 55
+            sleep 60
             adb exec-out screencap -p > docs/screenshots/01-home.png
 
-            adb shell input tap 236 1600
-            sleep 18
-            adb exec-out screencap -p > docs/screenshots/02-browse.png
-
             adb shell input tap 270 900
-            sleep 16
-            adb exec-out screencap -p > docs/screenshots/03-detail.png
+            sleep 18
+            adb exec-out screencap -p > docs/screenshots/02-detail.png
 
             adb shell input keyevent KEYCODE_BACK
-            sleep 3
+            sleep 6
+            adb shell input swipe 540 1400 540 600 400
+            sleep 12
+            adb exec-out screencap -p > docs/screenshots/03-collections.png
+
             adb shell input keyevent KEYCODE_BACK
             sleep 4
-            adb shell input swipe 540 1500 540 700 400
+            adb shell am start -n com.herowalls.app.debug/com.herowalls.app.MainActivity
+            sleep 8
+            adb shell input tap 993 218
             sleep 10
-            adb exec-out screencap -p > docs/screenshots/04-collections.png
-
-            adb shell input tap 1002 218
-            sleep 6
-            adb shell input text "Spider-Man"
-            sleep 2
-            adb shell input keyevent KEYCODE_ENTER
-            sleep 22
-            adb exec-out screencap -p > docs/screenshots/05-search.png
+            adb exec-out screencap -p > docs/screenshots/04-search.png
 
             ls -la docs/screenshots
 
