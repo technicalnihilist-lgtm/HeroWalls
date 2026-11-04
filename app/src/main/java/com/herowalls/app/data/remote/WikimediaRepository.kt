@@ -79,7 +79,7 @@ class WikimediaRepository(
             minSide = 1200,
             ttlMillis = 20 * 60 * 60 * 1000L
         )
-        val pick = page.items.firstOrNull() ?: return null
+        val pick = page.items.firstOrNull { it.isPortrait } ?: page.items.firstOrNull() ?: return null
         writeCache(cacheKey, page.copy(items = listOf(pick)))
         return pick
     }
@@ -123,20 +123,24 @@ class WikimediaRepository(
             }
         }
 
-        // Character categories need the character's name to appear in the file title or
-        // description, otherwise broad searches return unrelated photos. Collection
-        // categories are thematic and keep everything that passes the licence gate.
-        val token = Text.relevanceToken(category.name)
-        val strict = category.group != CollectionGroup.COLLECTIONS
+        // Commons full-text search is broad: a search for "Batman" also returns a railway
+        // station in Batman, Turkey, and "superhero comic" can surface a car. Every candidate
+        // is therefore scored on how likely it is to actually depict the subject, and low
+        // scores are dropped before anything reaches the UI.
+        val token = if (category.id.endsWith("-all") || category.group == CollectionGroup.COLLECTIONS) {
+            ""
+        } else {
+            Text.relevanceToken(category.searchTerm)
+        }
 
         val filtered = wallpapers
             .asSequence()
             .filter { it.mime in ALLOWED_MIME }
             .filter { it.width >= minSide && it.height >= minSide }
-            .filter { w ->
-                if (!strict || token.isBlank()) true
-                else (w.title + " " + w.description).lowercase(Locale.US).contains(token)
-            }
+            .map { it to relevanceScore(it, token) }
+            .filter { it.second >= MIN_RELEVANCE_SCORE }
+            .sortedByDescending { it.second }
+            .map { it.first }
             .distinctBy { it.pageId }
             .toList()
 
@@ -254,6 +258,23 @@ class WikimediaRepository(
         )
     }
 
+    /**
+     * Higher is better. Subject words (cosplay, statue, artwork, comic, logo...) carry the most
+     * weight; place and infrastructure words (station, street, province...) count against a file.
+     */
+    private fun relevanceScore(wallpaper: Wallpaper, token: String): Int {
+        val title = wallpaper.displayName.lowercase(Locale.US)
+        val description = wallpaper.description.lowercase(Locale.US)
+        var score = 0
+        if (token.isNotBlank()) {
+            if (title.contains(token)) score += 2
+            if (description.contains(token)) score += 1
+        }
+        if (subjectWords.containsMatchIn(title) || subjectWords.containsMatchIn(description)) score += 3
+        if (noiseWords.containsMatchIn(title) || noiseWords.containsMatchIn(description)) score -= 3
+        return score
+    }
+
     private suspend fun readCache(key: String, ttl: Long): FeedPage? {
         val row = cacheDao.get(key) ?: return null
         val age = System.currentTimeMillis() - row.createdAt
@@ -282,6 +303,22 @@ class WikimediaRepository(
         const val DEFAULT_MIN_SIDE = 800
         const val CACHE_TTL = 15 * 60 * 1000L
         private const val MAX_ATTEMPTS = 4
+        private const val MIN_RELEVANCE_SCORE = 3
+
+        /** Words that indicate the file really is artwork / a costume / a figure of a character. */
+        private val subjectWords = Regex(
+            "cosplay|costume|statue|figure|figurine|toy|wax|artwork|illustration|render|comic|" +
+                "character|mural|graffiti|bust|action figure|cover|emblem|logo|suit|mask",
+            RegexOption.IGNORE_CASE
+        )
+
+        /** Words that usually mean the search term matched a place or an unrelated object. */
+        private val noiseWords = Regex(
+            "station|railway|metro|airport|province|district|river|mountain|road|street|bridge|" +
+                "tower|hotel|school|church|mosque|village|town|truck|roadster|bus\\b|train|" +
+                "cemetery|hospital|stadium|park\\b|merkez|belediye",
+            RegexOption.IGNORE_CASE
+        )
         private const val MIN_GAP_MS = 350L
         private const val RATE_LIMIT_BACKOFF_MS = 4_000L
         private const val MAX_TITLES_PER_CALL = 40
