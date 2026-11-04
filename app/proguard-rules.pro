@@ -1,0 +1,7 @@
+-keep class com.herowalls.app.data.remote.dto.** { *; }
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
