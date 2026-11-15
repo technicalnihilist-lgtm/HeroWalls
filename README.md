@@ -82,3 +82,17 @@ Kotlin 1.9.24 · Jetpack Compose (BOM 2024.06) · Material 3 · Retrofit + OkHtt
 | `Screenshots` | boots an Android 33 emulator, installs the APK, walks the app and commits screenshots to `docs/screenshots/` |
 
 Screenshots are captured from a real emulator run of the built APK, never mocked up.
+
+---
+
+## ☕ Donate / Buy me a coffee
+
+**Coming soon** — our donation options are on the way.
+
+| Platform | Status |
+| --- | --- |
+| Paytm | Coming soon |
+| PayPal | Coming soon |
+| GPay (Google Pay) | Coming soon |
+
+If you like our work, you can support us with a donation. We are bringing this very soon — **coming soon**.
